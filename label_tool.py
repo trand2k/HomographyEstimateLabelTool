@@ -418,8 +418,8 @@ class ImageViewer(QMainWindow):
             self.folder_homography_save = folder_path
             self.files_homography_save = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".txt"))]
         self.update_list_widget()
-        print("save homography: ",self.folder_homography_save)    
-        print("file homography save: ", self.files_homography_save)     
+        # print("save homography: ",self.folder_homography_save)    
+        # print("file homography save: ", self.files_homography_save)     
 
     #todo: comment for debug
     def choose_cache_folder(self):
@@ -606,7 +606,6 @@ class CustomGraphicsView(QGraphicsView):
 #TODO: code save button
 #TODO: code unsave button
 #TODO: code reset button
-
 
 def main():
     viewer = ImageViewer()
