@@ -9,6 +9,14 @@ This tool help to label homography matrix for image pairs. The tool is based on 
     ```
 2. Load image pair
     ```
-    E button - previous image pair
-    R button - next image pair
-    Q button - save homography matrix and next image pair
+    zoom-in
+    zoom-out
+    prev - E
+    next - R
+    save - Q
+    Reset homo
+    Reset homo to cache
+    occurency slide bar
+
+
+    
