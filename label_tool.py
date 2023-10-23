@@ -118,7 +118,7 @@ class ImageViewer(QMainWindow):
 
         # Add buttons to a horizontal layout
         widget_with_layout = QWidget()
-        button_layout = QHBoxLayout(widget_with_layout)
+        button_layout = QHBoxLayout()
         button_layout.addWidget(self.zoom_in_button)
         button_layout.addWidget(self.zoom_out_button)
         button_layout.addWidget(self.prev_button)
@@ -127,14 +127,16 @@ class ImageViewer(QMainWindow):
         button_layout.addWidget(self.reset_homo_button)
         button_layout.addWidget(self.reset_homo_cache_button)
 
+        layout_group = QVBoxLayout(widget_with_layout)
+        layout_group.addLayout(button_layout)
+        layout_group.addWidget(self.slider)
+        self.list_widget = QListWidget(self.central_widget)
+        layout_group.addWidget(self.list_widget)
         # Add QSpliter 
         splitter = QSplitter(Qt.Vertical)
         splitter.addWidget(self.graphics_view)
         splitter.addWidget(widget_with_layout)  # Add the horizontal button layout
-        splitter.addWidget(self.slider)
-
-        self.list_widget = QListWidget(self.central_widget)
-        splitter.addWidget(self.list_widget)
+        
         layout.addWidget(splitter)
         # Add the graphics view, button layout, and slider
         # layout.addWidget(self.graphics_view)
@@ -351,10 +353,16 @@ class ImageViewer(QMainWindow):
             self.folder_homography_cache + "/" + new_file_name), self.folder_homography_cache + "/" + new_file_name
     def list_item_clicked(self, item):
         # Handle the event when a list item is clicked
+
         file_path = item.text()
         self.image_data = cv2.imread(file_path)
         self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
         self.display_image(self.image_data)
+        homography_matrix = self.read_homography_matrix(self.has_cache_label_file(file_path)[1])
+        self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+        self.display_image(self.opencv_helper.visualize_image)
+
+
     def read_homography_matrix(self, file_path):
         '''
             read homography matrix from file
@@ -371,7 +379,6 @@ class ImageViewer(QMainWindow):
     def open_folder_image(self):
         options = QFileDialog.Options()
         folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
-
         #
         # folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_jpg"
         # print(folder_path)     
