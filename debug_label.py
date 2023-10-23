@@ -1,37 +1,43 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton, QGraphicsView, QGraphicsScene, QSizePolicy, QSplitter
 
-class MainWindow(QMainWindow):
+class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.label = QLabel("Press and hold Ctrl, click, and release", self)
-        self.setCentralWidget(self.label)
+        self.init_ui()
 
-        self.setGeometry(100, 100, 400, 300)
-        self.setWindowTitle("Ctrl + Mouse Click/Release Example")
+    def init_ui(self):
+        self.setWindowTitle('Resizable Elements')
+        self.setGeometry(100, 100, 800, 600)
 
-    def mouseMoveEvent(self, event):
-        # Check if the Ctrl key is pressed during mouse move
-        if event.modifiers() == Qt.ControlModifier:
-            x, y = event.x(), event.y()
-            self.label.setText(f"Ctrl + Mouse Move: ({x}, {y})")
+        layout = QVBoxLayout(self)
 
-    def mousePressEvent(self, event):
-        # Check if the Ctrl key is pressed during mouse press
-        if event.modifiers() == Qt.ControlModifier:
-            x, y = event.x(), event.y()
-            self.label.setText(f"Ctrl + Mouse Press: ({x}, {y})")
+        # Create a QPushButton
+        button = QPushButton('Resizable Button')
+        button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-    def mouseReleaseEvent(self, event):
-        # Check if the Ctrl key is pressed during mouse release
-        if event.modifiers() == Qt.ControlModifier:
-            x, y = event.x(), event.y()
-            self.label.setText(f"Ctrl + Mouse Release: ({x}, {y})")
+        # Create a QGraphicsView
+        graphics_view = QGraphicsView()
+        scene = QGraphicsScene()
+        graphics_view.setScene(scene)
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
+        # Create a QWidget to hold the QVBoxLayout
+        widget_with_layout = QWidget()
+        widget_layout = QVBoxLayout(widget_with_layout)
+        widget_layout.addWidget(button)
+
+        # Create a QSplitter and add the QWidget and QGraphicsView to it
+        splitter = QSplitter()
+        splitter.addWidget(widget_with_layout)
+        splitter.addWidget(graphics_view)
+
+        layout.addWidget(splitter)
+
+        self.setLayout(layout)
+
+        self.show()
+
+if __name__ == '__main__':
+    app = QApplication([])
     window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    app.exec_()
