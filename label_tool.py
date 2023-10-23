@@ -166,10 +166,10 @@ class ImageViewer(QMainWindow):
         self.point_in_image = None
 
         #todo: for debug
-        self.open_tiff_file()
-        self.choose_cache_folder()
-        self.choose_save_folder()
-        self.open_folder_image()
+        # self.open_tiff_file()
+        # self.choose_cache_folder()
+        # self.choose_save_folder()
+        # self.open_folder_image()
     
     def reset_homo_button_click(self):
         homography_matrix = np.eye(3)
@@ -359,11 +359,11 @@ class ImageViewer(QMainWindow):
 
     #todo: comment for debug
     def open_folder_image(self):
-        # options = QFileDialog.Options()
-        # folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
 
         #
-        folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_jpg"
+        # folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_jpg"
         # print(folder_path)     
         if folder_path:
             self.folder_image_path = folder_path
@@ -393,27 +393,27 @@ class ImageViewer(QMainWindow):
 
     #todo: comment for debug
     def open_tiff_file(self):
-        # options = QFileDialog.Options()
-        # file_path, _ = QFileDialog.getOpenFileName(self, 'Open Map TIFF file', '', 'Images (*.tif);;All Files (*)', options=options)
-        # if file_path:
-        #     self.file_map_path = file_path
-        #     # print(self.file_map_path)
-        #     self.map_data = self.read_map(self.file_map_path)
-        #     self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
-        #     self.display_image(self.map_data)
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, 'Open Map TIFF file', '', 'Images (*.tif);;All Files (*)', options=options)
+        if file_path:
+            self.file_map_path = file_path
+            # print(self.file_map_path)
+            self.map_data = self.read_map(self.file_map_path)
+            self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+            self.display_image(self.map_data)
 
         # debug code
-        self.file_map_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_map/map6.tif"
-        self.map_data = self.read_map(self.file_map_path)
-        self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
-        self.display_image(self.map_data)
+        # self.file_map_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_map/map6.tif"
+        # self.map_data = self.read_map(self.file_map_path)
+        # self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+        # self.display_image(self.map_data)
 
 
     #todo: comment for debug
     def choose_save_folder(self):
-        # options = QFileDialog.Options()
-        # folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
-        folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography"
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
+        # folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography"
         if folder_path:
             self.folder_homography_save = folder_path
             self.files_homography_save = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".txt"))]
@@ -423,14 +423,14 @@ class ImageViewer(QMainWindow):
 
     #todo: comment for debug
     def choose_cache_folder(self):
-        # options = QFileDialog.Options()
-        # folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
-        # if folder_path:
-        #     self.folder_homography_cache = folder_path
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
+        if folder_path:
+            self.folder_homography_cache = folder_path
         # print("cache homography: ", self.folder_homography_cache)
 
         # debug code
-        self.folder_homography_cache = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography_cache"
+        # self.folder_homography_cache = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography_cache"
 
     def load_image(self, file_path):
         pixmap = QPixmap(file_path)
@@ -458,6 +458,7 @@ class ImageViewer(QMainWindow):
         if self.left_mouse_button_pressed:
             print(f"Mouse moved in CustomMainWindow: ({scene_pos.x()}, {scene_pos.y()})")
             self.point_move = (int(scene_pos.x()), int(scene_pos.y()))
+            # print("MOUSE MOVE: ", self.point_move)
             if self.point_move_pre is None:
                 self.opencv_helper.change_point(self.clicked_point,self.point_move)
             else:
@@ -472,7 +473,10 @@ class ImageViewer(QMainWindow):
             self.left_mouse_button_pressed = False
             print(f"Mouse released in CustomMainWindow: ({self.graphics_view.event_click[0]}, {self.graphics_view.event_click[1]})")
             self.point_move = (int(self.graphics_view.event_click[0]), int(self.graphics_view.event_click[1]))
-            self.opencv_helper.change_point(self.point_move_pre, self.point_move)
+            if self.point_move_pre is None:
+                self.opencv_helper.change_point(self.clicked_point,self.point_move)
+            else:
+                self.opencv_helper.change_point(self.point_move_pre, self.point_move)
             self.point_move_pre = None
             self.draw_points_release()
         super(ImageViewer, self).mouseReleaseEvent(event)
