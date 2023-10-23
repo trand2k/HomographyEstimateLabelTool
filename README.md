@@ -1,7 +1,11 @@
 # HomographyEstimateLabelTool
 ## Introduction
-This tool help to label homography matrix for image pairs. The tool is based on Qt5.9.1 and OpenCV3.4.1. The tool is tested on Ubuntu 18.04.
+This tool help to label homography matrix for image pairs. The tool is based on Qt5.9.1 and OpenCV3.4.1. The tool is tested on Ubuntu 20.04.
 ## How to install
+install osgeo
+    ```
+    conda install -c conda-forge gdal==3.6.3
+
 ## How to use
 1. Open the tool
     ```
