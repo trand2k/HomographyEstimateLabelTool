@@ -50,7 +50,12 @@ class ImageViewer(QMainWindow):
         # create menu bar 
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
-
+        
+        # Open folder action
+        choose_data_all_action = QAction("Choose data all", self)
+        choose_data_all_action.triggered.connect(self.choose_data_all)
+        file_menu.addAction(choose_data_all_action)
+        
         # Open folder action 
         open_action = QAction("Open folder image", self)
         open_action.triggered.connect(self.open_folder_image)
@@ -374,6 +379,17 @@ class ImageViewer(QMainWindow):
                 dtype=np.float32)
         homography_matrix = np.loadtxt(file_path)
         return homography_matrix
+    
+
+    #todo: comment for debug
+    def choose_data_all(self):
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open All Folder', options=options)
+        self.open_tiff_file_for_all(folder_path)
+        self.choose_cache_folder_for_all(folder_path)
+        self.choose_save_folder_for_all(folder_path)
+        self.open_folder_image_for_all(folder_path)
+        # pass
 
     #todo: comment for debug
     def open_folder_image(self):
@@ -381,6 +397,35 @@ class ImageViewer(QMainWindow):
         folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
         #
         # folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_jpg"
+        # print(folder_path)     
+        if folder_path:
+            self.folder_image_path = folder_path
+        self.file_images_path = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".jpg",".jpeg", ".png"))]
+        # print(self.folder_image_path)
+        # print(self.file_images_path)
+        self.update_list_widget()
+        if self.file_images_path:
+
+            first_item = self.list_widget.item(0)
+            if first_item:
+                self.list_widget.setCurrentItem(first_item)
+                
+                # Load and display the first image
+                first_image_path = first_item.text()
+                self.image_data = cv2.imread(first_image_path)
+                self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
+                '''
+                add new image function:
+                    :param map: 
+                    :param image:
+                    :param homography_matrix:    
+                '''
+                homography_matrix = self.read_homography_matrix(self.has_cache_label_file(first_image_path)[1])
+                self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+                self.display_image(self.opencv_helper.visualize_image)
+    
+    def open_folder_image_for_all(self, folder_path):
+        folder_path = folder_path + "/drone_jpg"
         # print(folder_path)     
         if folder_path:
             self.folder_image_path = folder_path
@@ -418,12 +463,20 @@ class ImageViewer(QMainWindow):
             self.map_data = self.read_map(self.file_map_path)
             self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
             self.display_image(self.map_data)
-
+    
+    def open_tiff_file_for_all(self, folder_path):
         # debug code
-        # self.file_map_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_map/map6.tif"
-        # self.map_data = self.read_map(self.file_map_path)
-        # self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
-        # self.display_image(self.map_data)
+
+
+        # Split the path and get the last part
+        last_part = os.path.basename(folder_path)
+        # Extract the digit from the last part
+        number = ''.join(filter(str.isdigit, last_part))
+
+        self.file_map_path = folder_path + "/drone_map/map" + str(number) + ".tif"
+        self.map_data = self.read_map(self.file_map_path)
+        self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+        self.display_image(self.map_data)
 
 
     #todo: comment for debug
@@ -438,6 +491,15 @@ class ImageViewer(QMainWindow):
         # print("save homography: ",self.folder_homography_save)    
         # print("file homography save: ", self.files_homography_save)     
 
+    def choose_save_folder_for_all(self,folder_path):
+        folder_path = folder_path + "/drone_homography"
+        if folder_path:
+            self.folder_homography_save = folder_path
+            self.files_homography_save = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".txt"))]
+        self.update_list_widget()
+        # print("save homography: ",self.folder_homography_save)    
+        # print("file homography save: ", self.files_homography_save)  
+    
     #todo: comment for debug
     def choose_cache_folder(self):
         options = QFileDialog.Options()
@@ -448,6 +510,8 @@ class ImageViewer(QMainWindow):
 
         # debug code
         # self.folder_homography_cache = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography_cache"
+    def choose_cache_folder_for_all(self, folder_path):
+        self.folder_homography_cache = folder_path+"/drone_homography_cache"
 
     def load_image(self, file_path):
         pixmap = QPixmap(file_path)
