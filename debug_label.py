@@ -1,55 +1,34 @@
-# from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton, QGraphicsView, QGraphicsScene, QSizePolicy, QSplitter
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
 
-# class MainWindow(QWidget):
-#     def __init__(self):
-#         super(MainWindow, self).__init__()
+class MyMainWindow2(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-#         self.init_ui()
+        self.setWindowTitle("Window 2")
 
-#     def init_ui(self):
-#         self.setWindowTitle('Resizable Elements')
-#         self.setGeometry(100, 100, 800, 600)
+        button = QPushButton("Close Window", self)
+        button.clicked.connect(self.close)
 
-#         layout = QVBoxLayout(self)
+        self.setCentralWidget(button)
 
-#         # Create a QPushButton
-#         button = QPushButton('Resizable Button')
-#         button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+class MyMainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-#         # Create a QGraphicsView
-#         graphics_view = QGraphicsView()
-#         scene = QGraphicsScene()
-#         graphics_view.setScene(scene)
+        self.setWindowTitle("Main Window")
 
-#         # Create a QWidget to hold the QVBoxLayout
-#         widget_with_layout = QWidget()
-#         widget_layout = QVBoxLayout(widget_with_layout)
-#         widget_layout.addWidget(button)
+        button = QPushButton("Open Window", self)
+        button.clicked.connect(self.open_window)
 
-#         # Create a QSplitter and add the QWidget and QGraphicsView to it
-#         splitter = QSplitter()
-#         splitter.addWidget(widget_with_layout)
-#         splitter.addWidget(graphics_view)
+        self.setCentralWidget(button)
+        self.window1 = MyMainWindow2()
+    def open_window(self):
+        print("Open Window")
+        # window1 = MyMainWindow2()
+        self.window1.show()
 
-#         layout.addWidget(splitter)
-
-#         self.setLayout(layout)
-
-#         self.show()
-
-# if __name__ == '__main__':
-#     app = QApplication([])
-#     window = MainWindow()
-#     app.exec_()
-
-import os
-
-folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all"
-
-# Split the path and get the last part
-last_part = os.path.basename(folder_path)
-
-# Extract the digit from the last part
-number = ''.join(filter(str.isdigit, last_part))
-
-print(number)
+if __name__ == "__main__":
+    app = QApplication([])
+    main_window = MyMainWindow()
+    main_window.show()
+    app.exec_()
