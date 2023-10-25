@@ -21,6 +21,8 @@ install osgeo
     Reset homo
     Reset homo to cache
     occurency slide bar
+    four point conner - W
+    save point and out - A
 
 
     

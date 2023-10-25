@@ -15,12 +15,13 @@ import os
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QFileDialog,QShortcut,QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage, QTransform, QWheelEvent,QKeySequence
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtWidgets import QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider
+from PyQt5.QtWidgets import QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox
 import sys
 import cv2
 import numpy as np
 import os
 from helper.opencv_helper import Opencv_helper
+from helper.window_2_test import MainWindow2
 class ImageViewer(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -90,6 +91,9 @@ class ImageViewer(QMainWindow):
         self.reset_homo_button = QPushButton("Reset Homo", self.central_widget)
         self.reset_homo_cache_button = QPushButton("Reset Homo Cache", self.central_widget)
 
+        self.four_point_press_button = QPushButton("Four Point Press", self.central_widget)
+
+
         # create a slider
         self.slider = QSlider(self)
         self.slider.setOrientation(1)  # 1 corresponds to vertical orientation
@@ -111,6 +115,10 @@ class ImageViewer(QMainWindow):
         save_shortcut = QShortcut(QKeySequence("Q"), self)
         save_shortcut.activated.connect(self.handle_save_button_click)
         self.save_button.clicked.connect(self.handle_save_button_click)
+
+        four_point_press_shortcut = QShortcut(QKeySequence("W"), self)
+        four_point_press_shortcut.activated.connect(self.handle_four_point_press_button_click)
+        self.four_point_press_button.clicked.connect(self.handle_four_point_press_button_click)
         
 
 
@@ -123,7 +131,7 @@ class ImageViewer(QMainWindow):
 
         # Add buttons to a horizontal layout
         widget_with_layout = QWidget()
-        button_layout = QHBoxLayout()
+        button_layout = QVBoxLayout()
         button_layout.addWidget(self.zoom_in_button)
         button_layout.addWidget(self.zoom_out_button)
         button_layout.addWidget(self.prev_button)
@@ -131,14 +139,19 @@ class ImageViewer(QMainWindow):
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.reset_homo_button)
         button_layout.addWidget(self.reset_homo_cache_button)
+        button_layout.addWidget(self.four_point_press_button)
+
+        button_layout.addWidget(self.slider)
+        self.list_widget = QListWidget(self.central_widget)
+        button_layout.addWidget(self.list_widget)
 
         layout_group = QVBoxLayout(widget_with_layout)
         layout_group.addLayout(button_layout)
-        layout_group.addWidget(self.slider)
-        self.list_widget = QListWidget(self.central_widget)
-        layout_group.addWidget(self.list_widget)
+        # layout_group.addWidget(self.slider)
+        # self.list_widget = QListWidget(self.central_widget)
+        # layout_group.addWidget(self.list_widget)
         # Add QSpliter 
-        splitter = QSplitter(Qt.Vertical)
+        splitter = QSplitter(Qt.Horizontal)
         splitter.addWidget(self.graphics_view)
         splitter.addWidget(widget_with_layout)  # Add the horizontal button layout
         
@@ -182,6 +195,9 @@ class ImageViewer(QMainWindow):
         self.point_in_map = None
         self.point_in_image = None
 
+        self.window2 = MainWindow2()
+        self.window2.destroyed.connect(self.handle_window2_closed)
+
         #todo: for debug
         # self.open_tiff_file()
         # self.choose_cache_folder()
@@ -207,6 +223,56 @@ class ImageViewer(QMainWindow):
         homography_matrix = self.opencv_helper.homography_matrix
         self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
         self.display_image(self.opencv_helper.visualize_image)
+    
+    def handle_window2_closed(self):
+        condition = self.check_condition(self.window2.mouse_click_point_1, self.window2.mouse_click_point_2)
+        if not condition:
+            # print("check condition")
+            QMessageBox.warning(self, "Warning", "Point not match between 2 image")
+            # self.window2.show()
+            # Conditions are met, close window1
+            # print("CHECK:  ", self.window2.mouse_click_point_1)
+            # print("CHECK2 :  ", self.window2.mouse_click_point_2)
+            
+            self.window2.reset_point()
+            self.window2.destroyed.connect(self.handle_window2_closed)
+        else:
+            points_src = np.array(self.window2.mouse_click_point_1, dtype=float)
+            points_dst = np.array(self.window2.mouse_click_point_2, dtype=float)
+
+            points_src = points_src.reshape(-1, 1, 2)
+            points_dst = points_dst.reshape(-1, 1, 2)
+
+            # Find homography matrix
+            homography_matrix, _ = cv2.findHomography(points_src, points_dst, cv2.RANSAC)
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+            self.display_image(self.opencv_helper.visualize_image)
+            print("DONE")
+            # print(homography_matrix)
+
+            self.window2.reset_point()
+            self.window2.destroyed.connect(self.handle_window2_closed)
+    
+    @staticmethod
+    def check_condition(list_point_1, list_point_2):
+        try:
+            points_src = np.array(list_point_1, dtype=float)
+            points_dst = np.array(list_point_2, dtype=float)
+
+            points_src = points_src.reshape(-1, 1, 2)
+            points_dst = points_dst.reshape(-1, 1, 2)
+
+            # Find homography matrix
+            homography_matrix, _ = cv2.findHomography(points_src, points_dst, cv2.RANSAC)
+            
+            return True
+        except:
+            return False
+
+    
+    def handle_four_point_press_button_click(self):
+        self.window2.load_image(self.image_data, self.map_data)
+        self.window2.show()
 
     def handle_prev_button_click(self):
         if self.file_images_path:
