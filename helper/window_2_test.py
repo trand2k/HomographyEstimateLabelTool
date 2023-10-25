@@ -56,6 +56,20 @@ class MainWindow2(QWidget):
 
         self.mouse_click_point_1 = []
         self.mouse_click_point_2 = []
+
+        slider = QSlider(Qt.Horizontal, self)
+        slider.setMinimum(0)
+        slider.setMaximum(360)
+        slider.setValue(0)
+        slider.valueChanged.connect(self.slider_value_changed)
+        layout.addWidget(slider)
+
+    def rotate_view(self, angle):
+        self.graphics_view.rotate_view(angle)
+
+    def slider_value_changed(self, value):
+        self.rotate_view(value)
+    
     def closeEvent(self, event: QCloseEvent):
         # print("Window 1 is about to close.")
         self.destroyed.emit()  # Emit the custom signal
@@ -144,6 +158,8 @@ class GraphicView(QGraphicsView):
         self.zoom_factor = 1.0
         self.event_click = None
         self.move_mouse_event = None
+        self.rotation_angle = 0
+
 
     def mousePressEvent(self, event):
         pos_in_image = self.mapToScene(event.pos())
@@ -163,7 +179,14 @@ class GraphicView(QGraphicsView):
         delta = pos_in_scene_after_zoom - pos_in_scene_before_zoom
         self.centerOn(pos_in_scene_after_zoom)
 
+        # Apply the rotation angle to the view transform
+        transform = QTransform()
+        transform.rotate(self.rotation_angle)
+        transform.scale(self.zoom_factor, self.zoom_factor)
+        self.setTransform(transform)
+
         super().wheelEvent(event)
+
     def show_image(self, image):
         height, width, channel = image.shape
         bytes_per_line = 3 * width
@@ -173,6 +196,15 @@ class GraphicView(QGraphicsView):
         self.scene.clear()
         self.scene.addPixmap(pixmap)
         self.setSceneRect(0, 0, width, height)
+
+    def rotate_view(self, angle):
+        self.rotation_angle = angle
+
+        # Apply the rotation angle and zoom factor to the view transform
+        transform = QTransform()
+        transform.rotate(self.rotation_angle)
+        transform.scale(self.zoom_factor, self.zoom_factor)
+        self.setTransform(transform)
 
 if __name__ == "__main__":
     # app = QApplication([])

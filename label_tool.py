@@ -123,10 +123,11 @@ class ImageViewer(QMainWindow):
 
 
         self.reset_homo_button.clicked.connect(self.reset_homo_button_click)
+
+        reset_homo_cache_shortcut = QShortcut(QKeySequence("D"), self)
+        reset_homo_cache_shortcut.activated.connect(self.reset_homo_cache_button_click)
         self.reset_homo_cache_button.clicked.connect(self.reset_homo_cache_button_click)
-
-
-
+        
         layout = QVBoxLayout(self.central_widget)
 
         # Add buttons to a horizontal layout

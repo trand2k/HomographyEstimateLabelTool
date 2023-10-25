@@ -1,70 +1,54 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox
-from PyQt5.QtGui import QCloseEvent, QKeyEvent
-from PyQt5.QtCore import pyqtSignal
+import sys
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QApplication, QVBoxLayout, QWidget, QPushButton, QSlider
 from PyQt5.QtCore import Qt
-class MyMainWindow2(QMainWindow):
-    request_close = pyqtSignal()  # Custom signal indicating the intention to close
+from PyQt5.QtGui import QTransform
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.setWindowTitle("Window 2")
-
-        button = QPushButton("Close Window", self)
-        button.clicked.connect(self.request_close.emit)  # Emit the signal when the button is clicked
-
-        self.setCentralWidget(button)
-
-    def closeEvent(self, event: QCloseEvent):
-        # print("Window 1 is about to close.")
-        self.destroyed.emit()  # Emit the custom signal
-        super().closeEvent(event)
-    # def keyPressEvent(self, event):
-    #     print("key press")
-    #     if event.key() == Qt.Key_A:
-    #         self.destroy()
-    #         self.destroyed.emit()
-            # self.destroy()
-class MyMainWindow(QMainWindow):
+class RotatableGraphicsView(QGraphicsView):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Main Window")
+        self.setScene(QGraphicsScene(self))
+        self.setSceneRect(-50, -50, 100, 100)
 
-        button = QPushButton("Open Window", self)
-        button.clicked.connect(self.open_window)
+        rect_item = QGraphicsRectItem(-20, -20, 40, 40)
+        self.scene().addItem(rect_item)
 
-        self.setCentralWidget(button)
-        self.window1 = MyMainWindow2(parent=self)
-        self.window1.destroyed.connect(self.handle_window1_closed)
+    def rotate_view(self, angle):
+        transform = QTransform()
+        transform.rotate(angle)
+        self.setTransform(transform)
 
-        # Connect the custom signal to a slot method
-        # self.window1.request_close.connect(self.handle_request_close)
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
 
-    def open_window(self):
-        print("Open Window")
-        self.window1.show()
+        self.setGeometry(100, 100, 600, 400)
+        layout = QVBoxLayout()
 
-    def handle_window1_closed(self):
-        print("check condition")
-        self.window1.destroyed.connect(self.handle_window1_closed)
-        # # self.window1 = MyMainWindow2()
-        # self.window1.destroyed.connect(self.handle_window1_closed)
-        # if self.check_conditions():
-        #     # Conditions are met, close window1
-        #     self.window1.show()
-        # else:
-        #     # Conditions are not met, show a warning
-        #     QMessageBox.warning(self, "Warning", "Conditions not satisfied. Cannot close Window 1.")
-        #     # self.window1.show()
+        self.graphics_view = RotatableGraphicsView()
+        layout.addWidget(self.graphics_view)
 
-    def check_conditions(self):
-        # Replace this with your actual conditions
-        return False  # or False
-    
+        rotate_button = QPushButton("Rotate View", self)
+        # rotate_button.clicked.connect(self.rotate_view)
+        layout.addWidget(rotate_button)
+
+        slider = QSlider(Qt.Horizontal, self)
+        slider.setMinimum(0)
+        slider.setMaximum(360)
+        slider.setValue(0)
+        slider.valueChanged.connect(self.slider_value_changed)
+        layout.addWidget(slider)
+
+        self.setLayout(layout)
+
+    def rotate_view(self, angle):
+        self.graphics_view.rotate_view(angle)
+
+    def slider_value_changed(self, value):
+        self.rotate_view(value)
 
 if __name__ == "__main__":
-    app = QApplication([])
-    main_window = MyMainWindow()
+    app = QApplication(sys.argv)
+    main_window = MainWindow()
     main_window.show()
-    app.exec_()
+    sys.exit(app.exec_())
