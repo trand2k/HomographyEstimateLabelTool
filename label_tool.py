@@ -15,7 +15,7 @@ import os
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QFileDialog,QShortcut,QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage, QTransform, QWheelEvent,QKeySequence
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtWidgets import QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox
+from PyQt5.QtWidgets import QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox
 import sys
 import cv2
 import numpy as np
@@ -88,11 +88,14 @@ class ImageViewer(QMainWindow):
         self.prev_button = QPushButton("Prev", self.central_widget)
         self.next_button = QPushButton("Next", self.central_widget)
         self.save_button = QPushButton("Save", self.central_widget)
+        self.delete_button = QPushButton("Delete", self.central_widget)
         self.reset_homo_button = QPushButton("Reset Homo", self.central_widget)
         self.reset_homo_cache_button = QPushButton("Reset Homo Cache", self.central_widget)
 
         self.four_point_press_button = QPushButton("Four Point Press", self.central_widget)
 
+        
+        
 
         # create a slider
         self.slider = QSlider(self)
@@ -116,6 +119,10 @@ class ImageViewer(QMainWindow):
         save_shortcut.activated.connect(self.handle_save_button_click)
         self.save_button.clicked.connect(self.handle_save_button_click)
 
+        delete_shortcut = QShortcut(QKeySequence("S"), self)
+        delete_shortcut.activated.connect(self.handle_delete_button_click)
+        self.delete_button.clicked.connect(self.handle_delete_button_click)
+
         four_point_press_shortcut = QShortcut(QKeySequence("W"), self)
         four_point_press_shortcut.activated.connect(self.handle_four_point_press_button_click)
         self.four_point_press_button.clicked.connect(self.handle_four_point_press_button_click)
@@ -127,7 +134,7 @@ class ImageViewer(QMainWindow):
         reset_homo_cache_shortcut = QShortcut(QKeySequence("D"), self)
         reset_homo_cache_shortcut.activated.connect(self.reset_homo_cache_button_click)
         self.reset_homo_cache_button.clicked.connect(self.reset_homo_cache_button_click)
-        
+
         layout = QVBoxLayout(self.central_widget)
 
         # Add buttons to a horizontal layout
@@ -138,9 +145,14 @@ class ImageViewer(QMainWindow):
         button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.next_button)
         button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.delete_button)
         button_layout.addWidget(self.reset_homo_button)
         button_layout.addWidget(self.reset_homo_cache_button)
         button_layout.addWidget(self.four_point_press_button)
+        
+        self.plain_text_label = QLabel(self)
+        self.plain_text_label.setText(" E - prev \n R - next \n Q - save \n S - delete \n W - open point choose \n D - reset homo cache \n A - save after choose point")
+        button_layout.addWidget(self.plain_text_label)
 
         button_layout.addWidget(self.slider)
         self.list_widget = QListWidget(self.central_widget)
@@ -317,6 +329,47 @@ class ImageViewer(QMainWindow):
             # Update the selected item in the list widget
             self.list_widget.setCurrentItem(self.list_widget.item(next_index))
 
+    def handle_delete_button_click(self):
+        if self.file_images_path:
+            # Find the index of the currently displayed image
+            ######################################################
+            current_index = self.file_images_path.index(self.list_widget.currentItem().text())
+            homography_file_save = (self.folder_homography_save + "/" +
+                                    os.path.basename(self.file_images_path[current_index]).split(".")[0] + ".txt")
+            if os.path.exists(homography_file_save):
+                os.remove(homography_file_save)
+            ##########################################################
+            ###########   UPDATE TICK    #############################
+            ##########################################################
+
+            has_label, _ = self.has_label_file(self.list_widget.currentItem().text())
+            self.list_widget.currentItem().setData(Qt.UserRole, has_label)
+            if has_label:
+                self.list_widget.currentItem().setCheckState(Qt.Checked)
+            else:
+                self.list_widget.currentItem().setCheckState(Qt.Unchecked)
+
+
+            ##########################################################
+            ############     MOVE NEXT IMAGE     #####################
+            ##########################################################
+
+            # Increment the index to move to the next image
+            next_index = (current_index + 1) % len(self.file_images_path)
+
+            # Load and display the next image
+            next_image_path = self.file_images_path[next_index]
+            self.image_data = cv2.imread(next_image_path)
+            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
+            # for merge 2 image
+            homography_matrix = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+            self.display_image(self.opencv_helper.visualize_image)
+
+            # Update the selected item in the list widget
+            self.list_widget.setCurrentItem(self.list_widget.item(next_index))
+
+
     def handle_save_button_click(self):
         if self.file_images_path:
             # Find the index of the currently displayed image
@@ -331,7 +384,7 @@ class ImageViewer(QMainWindow):
                                    os.path.basename(self.file_images_path[current_index]).split(".")[0] + ".txt"
             print("CACHE PATH:  ", homography_file_cache)
             np.savetxt(homography_file_save, self.opencv_helper.homography_matrix)
-            np.savetxt(homography_file_cache, self.opencv_helper.homography_matrix)
+            # np.savetxt(homography_file_cache, self.opencv_helper.homography_matrix)
             ##########################################################
             '''
                 update tick for list widget
@@ -383,7 +436,7 @@ class ImageViewer(QMainWindow):
             else:
                 item.setCheckState(Qt.Unchecked)
             self.list_widget.addItem(item)
-
+            item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)
         # Connect the itemClicked signal to a slot
         self.list_widget.itemClicked.connect(self.list_item_clicked)
 
@@ -408,6 +461,9 @@ class ImageViewer(QMainWindow):
     def has_cache_label_file(self, file_path):
         '''
             check image have label or not
+            check in save folder 
+            if have label file, load homography from save folder
+            else load homography from cache folder
         '''
         # self.folder_image_path = ""
         # self.file_images_path = []
@@ -421,8 +477,10 @@ class ImageViewer(QMainWindow):
 
         new_file_name = file_name + ".txt"
 
-        return os.path.exists(
-            self.folder_homography_cache + "/" + new_file_name), self.folder_homography_cache + "/" + new_file_name
+        if os.path.exists(self.folder_homography_save + "/"+ new_file_name):
+            return True, self.folder_homography_save + "/"+ new_file_name
+        else:
+            return False, self.folder_homography_cache + "/"+ new_file_name
     def list_item_clicked(self, item):
         # Handle the event when a list item is clicked
 
@@ -685,6 +743,7 @@ class ImageViewer(QMainWindow):
         transform.scale(self.zoom_factor, self.zoom_factor)
         transform.translate(-self.graphics_view.viewport().width() / 2, -self.graphics_view.viewport().height() / 2)
         self.graphics_view.setTransform(transform)
+
 
 
 class CustomGraphicsView(QGraphicsView):
