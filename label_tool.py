@@ -452,6 +452,7 @@ class ImageViewer(QMainWindow):
         blue = geotiff.GetRasterBand(3).ReadAsArray()
         map_rgb = np.dstack((blue, green, red))
         return map_rgb
+    
     def update_list_widget(self):
         # Clear existing items
         self.list_widget.clear()
@@ -686,10 +687,12 @@ class ImageViewer(QMainWindow):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.left_mouse_button_pressed = True
-            self.clicked_point = (self.graphics_view.event_click[0],self.graphics_view.event_click[1])
-            # Redraw the image with the added points
-            self.draw_points()
+            if self.file_map_path:
+                self.left_mouse_button_pressed = True
+                self.clicked_point = (self.graphics_view.event_click[0],self.graphics_view.event_click[1])
+                # print(self.clicked_point)
+                # Redraw the image with the added points
+                self.draw_points()
         super(ImageViewer, self).mousePressEvent(event)
 
     def onGraphicsViewMouseMove(self, scene_pos):
@@ -707,7 +710,7 @@ class ImageViewer(QMainWindow):
 
     def mouseReleaseEvent(self, event):
         print("in orininal mouseReleaseEvent")
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self.left_mouse_button_pressed:
             self.left_mouse_button_pressed = False
             print(f"Mouse released in CustomMainWindow: ({self.graphics_view.event_click[0]}, {self.graphics_view.event_click[1]})")
             self.point_move = (int(self.graphics_view.event_click[0]), int(self.graphics_view.event_click[1]))
