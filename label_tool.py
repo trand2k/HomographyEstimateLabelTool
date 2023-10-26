@@ -15,13 +15,13 @@ import os
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QFileDialog,QShortcut,QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage, QTransform, QWheelEvent,QKeySequence
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtWidgets import QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox
+from PyQt5.QtWidgets import QToolBar,QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox
 import sys
 import cv2
 import numpy as np
 import os
 from helper.opencv_helper import Opencv_helper
-from helper.window_2_test import MainWindow2
+from helper.window2 import MainWindow2
 class ImageViewer(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -137,6 +137,11 @@ class ImageViewer(QMainWindow):
 
         layout = QVBoxLayout(self.central_widget)
 
+
+
+
+
+
         # Add buttons to a horizontal layout
         widget_with_layout = QWidget()
         button_layout = QVBoxLayout()
@@ -157,6 +162,32 @@ class ImageViewer(QMainWindow):
         button_layout.addWidget(self.slider)
         self.list_widget = QListWidget(self.central_widget)
         button_layout.addWidget(self.list_widget)
+
+        ############################################################
+        ################# TEST TOOL BAR ############################
+        ############################################################
+        
+        # toolbar = QToolBar(self)
+        # self.addToolBar(toolbar)
+
+        # # Add buttons and widgets to the toolbar
+        # toolbar.addWidget(self.zoom_in_button)
+        # toolbar.addWidget(self.zoom_out_button)
+        # toolbar.addWidget(self.prev_button)
+        # toolbar.addWidget(self.next_button)
+        # toolbar.addWidget(self.save_button)
+        # toolbar.addWidget(self.delete_button)
+        # toolbar.addWidget(self.reset_homo_button)
+        # toolbar.addWidget(self.reset_homo_cache_button)
+        # toolbar.addWidget(self.four_point_press_button)
+        # toolbar.addWidget(self.plain_text_label)
+        # toolbar.addWidget(self.slider)
+        # toolbar.addWidget(self.list_widget)
+
+
+        #############################################################
+        ############# END ###########################################
+        #############################################################
 
         layout_group = QVBoxLayout(widget_with_layout)
         layout_group.addLayout(button_layout)
@@ -552,9 +583,9 @@ class ImageViewer(QMainWindow):
     def open_folder_image_for_all(self, folder_path):
         folder_path = folder_path + "/drone_jpg"
         # print(folder_path)     
-        if folder_path:
+        if os.path.exists(folder_path):
             self.folder_image_path = folder_path
-        self.file_images_path = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".jpg",".jpeg", ".png"))]
+            self.file_images_path = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".jpg",".jpeg", ".png"))]
         # print(self.folder_image_path)
         # print(self.file_images_path)
         self.update_list_widget()
@@ -599,9 +630,10 @@ class ImageViewer(QMainWindow):
         number = ''.join(filter(str.isdigit, last_part))
 
         self.file_map_path = folder_path + "/drone_map/map" + str(number) + ".tif"
-        self.map_data = self.read_map(self.file_map_path)
-        self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
-        self.display_image(self.map_data)
+        if os.path.exists(self.file_map_path):
+            self.map_data = self.read_map(self.file_map_path)
+            self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+            self.display_image(self.map_data)
 
 
     #todo: comment for debug
@@ -618,7 +650,7 @@ class ImageViewer(QMainWindow):
 
     def choose_save_folder_for_all(self,folder_path):
         folder_path = folder_path + "/drone_homography"
-        if folder_path:
+        if os.path.exists(folder_path):
             self.folder_homography_save = folder_path
             self.files_homography_save = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".txt"))]
         self.update_list_widget()

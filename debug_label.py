@@ -1,54 +1,55 @@
 import sys
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QApplication, QVBoxLayout, QWidget, QPushButton, QSlider
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QTransform
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QAction, QToolBar, QVBoxLayout, QWidget, QUndoStack
 
-class RotatableGraphicsView(QGraphicsView):
+
+class MyMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setScene(QGraphicsScene(self))
-        self.setSceneRect(-50, -50, 100, 100)
+        self.initUI()
 
-        rect_item = QGraphicsRectItem(-20, -20, 40, 40)
-        self.scene().addItem(rect_item)
+    def initUI(self):
+        self.setWindowTitle('Undo Redo Example')
+        self.setGeometry(100, 100, 800, 600)
 
-    def rotate_view(self, angle):
-        transform = QTransform()
-        transform.rotate(angle)
-        self.setTransform(transform)
+        # Create a QTextEdit widget
+        self.text_edit = QTextEdit(self)
+        self.setCentralWidget(self.text_edit)
 
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+        # Create an undo stack
+        self.undo_stack = QUndoStack(self)
 
-        self.setGeometry(100, 100, 600, 400)
-        layout = QVBoxLayout()
+        # Create actions for undo and redo
+        undo_action = QAction('Undo', self)
+        undo_action.setShortcut('Ctrl+Z')
+        undo_action.triggered.connect(self.undo)
 
-        self.graphics_view = RotatableGraphicsView()
-        layout.addWidget(self.graphics_view)
+        redo_action = QAction('Redo', self)
+        redo_action.setShortcut('Ctrl+Y')
+        redo_action.triggered.connect(self.redo)
 
-        rotate_button = QPushButton("Rotate View", self)
-        # rotate_button.clicked.connect(self.rotate_view)
-        layout.addWidget(rotate_button)
+        # Create a toolbar
+        toolbar = QToolBar(self)
+        self.addToolBar(toolbar)
 
-        slider = QSlider(Qt.Horizontal, self)
-        slider.setMinimum(0)
-        slider.setMaximum(360)
-        slider.setValue(0)
-        slider.valueChanged.connect(self.slider_value_changed)
-        layout.addWidget(slider)
+        # Add undo and redo actions to the toolbar
+        toolbar.addAction(undo_action)
+        toolbar.addAction(redo_action)
 
-        self.setLayout(layout)
+        # Connect the undo stack to the text edit for undo and redo support
+        self.undo_stack.setUndoLimit(10)  # Set the maximum number of undo actions
+        self.text_edit.document().undoAvailable.connect(undo_action.setEnabled)
+        self.text_edit.document().redoAvailable.connect(redo_action.setEnabled)
 
-    def rotate_view(self, angle):
-        self.graphics_view.rotate_view(angle)
+    def undo(self):
+        self.undo_stack.undo()
 
-    def slider_value_changed(self, value):
-        self.rotate_view(value)
+    def redo(self):
+        self.undo_stack.redo()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main_window = MainWindow()
+    main_window = MyMainWindow()
     main_window.show()
     sys.exit(app.exec_())
