@@ -1,55 +1,34 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QAction, QToolBar, QVBoxLayout, QWidget, QUndoStack
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
 
-
-class MyMainWindow(QMainWindow):
+class MainWindow1(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("MainWindow 1")
+        self.setGeometry(100, 100, 400, 300)
+        self.button = QPushButton("Switch to MainWindow 2", self)
+        self.button.clicked.connect(self.switch_to_main_window2)
 
-        self.initUI()
+    def switch_to_main_window2(self):
+        self.hide()
+        main_window2.show()
 
-    def initUI(self):
-        self.setWindowTitle('Undo Redo Example')
-        self.setGeometry(100, 100, 800, 600)
+class MainWindow2(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("MainWindow 2")
+        self.setGeometry(100, 100, 400, 300)
+        self.button = QPushButton("Switch to MainWindow 1", self)
+        self.button.clicked.connect(self.switch_to_main_window1)
 
-        # Create a QTextEdit widget
-        self.text_edit = QTextEdit(self)
-        self.setCentralWidget(self.text_edit)
+    def switch_to_main_window1(self):
+        self.hide()
+        main_window1.show()
 
-        # Create an undo stack
-        self.undo_stack = QUndoStack(self)
+app = QApplication([])
 
-        # Create actions for undo and redo
-        undo_action = QAction('Undo', self)
-        undo_action.setShortcut('Ctrl+Z')
-        undo_action.triggered.connect(self.undo)
+main_window1 = MainWindow1()
+main_window2 = MainWindow2()
 
-        redo_action = QAction('Redo', self)
-        redo_action.setShortcut('Ctrl+Y')
-        redo_action.triggered.connect(self.redo)
+main_window1.show()
 
-        # Create a toolbar
-        toolbar = QToolBar(self)
-        self.addToolBar(toolbar)
-
-        # Add undo and redo actions to the toolbar
-        toolbar.addAction(undo_action)
-        toolbar.addAction(redo_action)
-
-        # Connect the undo stack to the text edit for undo and redo support
-        self.undo_stack.setUndoLimit(10)  # Set the maximum number of undo actions
-        self.text_edit.document().undoAvailable.connect(undo_action.setEnabled)
-        self.text_edit.document().redoAvailable.connect(redo_action.setEnabled)
-
-    def undo(self):
-        self.undo_stack.undo()
-
-    def redo(self):
-        self.undo_stack.redo()
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main_window = MyMainWindow()
-    main_window.show()
-    sys.exit(app.exec_())
+app.exec_()

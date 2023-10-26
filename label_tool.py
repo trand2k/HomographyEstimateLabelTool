@@ -21,7 +21,7 @@ import cv2
 import numpy as np
 import os
 from helper.opencv_helper import Opencv_helper
-from helper.window2 import MainWindow2
+from helper.window_dot_point import MainWindow2
 class ImageViewer(QMainWindow):
     def __init__(self):
         super().__init__()
