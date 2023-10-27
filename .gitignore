@@ -10,7 +10,7 @@ env/
 build/
 dist/
 *.spec
-
+label_tool
 # IDE files
 .idea/
 .vscode/
