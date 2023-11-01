@@ -1,13 +1,16 @@
 # HomographyEstimateLabelTool
 ## Introduction
-This tool help to label homography matrix for image pairs. The tool is based on Qt5.9.1 and OpenCV3.4.1. The tool is tested on Ubuntu 18.04.
+This tool help to label homography matrix for image pairs. The tool is based on Qt5.9.1 and OpenCV3.4.1. The tool is tested on Ubuntu 20.04.
 
 ## Task list
 
 - [x] Label using mouse keep and move
 - [x] Label using dot 4 point match
 - [x] Label aerial image match map
-- [ ] Label map match other moment map
+- [x] Label map match other moment map
+- [x] change map when label
+- [ ] auto genarate cache label file
+- [ ] choose matching algorithm option for autogenerate cache label file
 
 
 ## How to install
