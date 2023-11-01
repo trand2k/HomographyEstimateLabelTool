@@ -15,7 +15,7 @@ import os
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QFileDialog,QShortcut,QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage, QTransform, QWheelEvent,QKeySequence
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtWidgets import QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider
+from PyQt5.QtWidgets import QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider, QMenuBar
 import sys
 import cv2
 import numpy as np
@@ -25,6 +25,9 @@ from PyQt5.QtGui import QCloseEvent
 class MainWindow2(QWidget):
     def __init__(self):
         super().__init__()
+
+        menubar = self.createMenuBar()
+
 
         self.graphics_view = GraphicView(self)
         self.scene = QGraphicsScene()
@@ -76,6 +79,80 @@ class MainWindow2(QWidget):
         slider.setValue(0)
         slider.valueChanged.connect(self.slider_value_changed)
         layout.addWidget(slider)
+
+        self.layout().setMenuBar(menubar)
+
+        self.map_base_tiff_file = None
+        self.data_homography_save_folder = None
+        self.data_sub_map_folder = None
+        self.data_sub_map_list = []
+        self.map_data = None
+
+    def createMenuBar(self):
+        # Create a menu bar
+        menubar = QMenuBar()
+
+        # Create a File menu
+        fileMenu = menubar.addMenu('File')
+
+        # Create actions for the File menu
+        open_all_action = fileMenu.addAction('Open all')
+        choose_map_base_action = fileMenu.addAction('Choose map base')
+        choose_sub_map_action = fileMenu.addAction('Choose folder sub-map')
+        save_action = fileMenu.addAction('Choose folder save homoragapy')
+
+        # Connect actions to functions (you need to implement these functions)
+        open_all_action.triggered.connect(self.handle_open_all_click)
+        choose_map_base_action.triggered.connect(self.handle_map_base_click)
+        choose_sub_map_action.triggered.connect(self.handle_sub_map_click)
+        save_action.triggered.connect(self.handle_save_click)
+
+        return menubar
+    
+    def read_map(self,map_path):
+        # print("data path : " , map_path)
+        geotiff = gdal.Open(map_path)
+        red = geotiff.GetRasterBand(1).ReadAsArray()
+        green = geotiff.GetRasterBand(2).ReadAsArray()
+        blue = geotiff.GetRasterBand(3).ReadAsArray()
+        map_rgb = np.dstack((blue, green, red))
+        return map_rgb
+
+    def handle_open_all_click(self):
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open All', options=options)
+        if folder_path:
+            pass
+        pass
+
+    def handle_map_base_click(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, 'Open Map TIFF file', '', 'Images (*.tif);;All Files (*)', options=options)
+        if file_path:
+            self.handle_map_base_click_support(file_path)
+
+    def handle_map_base_click_support(self, file_path):
+        self.map_base_tiff_file = file_path
+        # print(self.map_base_tiff_file)
+        self.map_data = self.read_map(self.map_base_tiff_file)
+        self.display_image_1(self.map_data)
+        
+
+
+    def handle_sub_map_click(self):
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
+        if folder_path:
+            self.handle_sub_map_click_support(folder_path)
+
+    def handle_map_base_click_support(self, folder_path):
+        self.data_sub_map_folder = folder_path
+        self.data_sub_map_list = [self.data_sub_map_folder + "/" + str(i) for i in os.listdir(self.data_sub_map_folder) if i.endswith((".tif"))]
+        pass
+
+    def handle_save_click(self):
+        pass
+
 
     def choose_image_1(self):
         options = QFileDialog.Options()

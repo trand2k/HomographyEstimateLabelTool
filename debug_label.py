@@ -1,34 +1,52 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QLabel, QVBoxLayout, QWidget, QPushButton
+from PyQt5.QtCore import Qt
 
-class MainWindow1(QMainWindow):
+class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MainWindow 1")
-        self.setGeometry(100, 100, 400, 300)
-        self.button = QPushButton("Switch to MainWindow 2", self)
-        self.button.clicked.connect(self.switch_to_main_window2)
 
-    def switch_to_main_window2(self):
-        self.hide()
-        main_window2.show()
+        # Create a combo box
+        self.comboBox = QComboBox(self)
+        self.comboBox.addItem("Option 1")
+        self.comboBox.addItem("Option 2")
+        self.comboBox.addItem("Option 3")
 
-class MainWindow2(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("MainWindow 2")
-        self.setGeometry(100, 100, 400, 300)
-        self.button = QPushButton("Switch to MainWindow 1", self)
-        self.button.clicked.connect(self.switch_to_main_window1)
+        # Create a label to display the selected item
+        self.label = QLabel("Selected: ", self)  # Initialize with a default text
+        self.label.setAlignment(Qt.AlignCenter)
 
-    def switch_to_main_window1(self):
-        self.hide()
-        main_window1.show()
+        # Create a reset button
+        self.resetButton = QPushButton("Reset Combo Box", self)
+        self.resetButton.clicked.connect(self.reset_combo_box)
 
-app = QApplication([])
+        # Create a layout and add the combo box, label, and button to it
+        layout = QVBoxLayout()
+        layout.addWidget(self.comboBox)
+        layout.addWidget(self.label)
+        layout.addWidget(self.resetButton)
 
-main_window1 = MainWindow1()
-main_window2 = MainWindow2()
+        # Create a central widget and set the layout
+        central_widget = QWidget(self)
+        central_widget.setLayout(layout)
 
-main_window1.show()
+        # Set the central widget of the main window
+        self.setCentralWidget(central_widget)
 
-app.exec_()
+        # Connect the combo box's currentIndexChanged signal to a slot
+        self.comboBox.currentIndexChanged.connect(self.update_label)
+
+    def update_label(self):
+        # Update the label with the selected item
+        selected_item = self.comboBox.currentText()
+        self.label.setText(f"Selected: {selected_item}")
+
+    def reset_combo_box(self):
+        # Clear all items in the combo box
+        self.comboBox.clear()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MyWindow()
+    window.show()
+    sys.exit(app.exec_())

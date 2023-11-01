@@ -15,7 +15,7 @@ import os
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QFileDialog,QShortcut,QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage, QTransform, QWheelEvent,QKeySequence
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtWidgets import QToolBar,QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox
+from PyQt5.QtWidgets import QToolBar,QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox,QComboBox
 import sys
 import cv2
 import numpy as np
@@ -50,35 +50,49 @@ class ImageViewer(QMainWindow):
 
         # create menu bar 
         menubar = self.menuBar()
+
+        #######################################################
+        ################# LABEL IMAGE #########################
+        #######################################################
         file_menu = menubar.addMenu("File")
         
+        choose_data_map_folder_action = QAction("Choose data all label map to map", self)
+        choose_data_map_folder_action.triggered.connect(self.choose_data_map_folder)
+        file_menu.addAction(choose_data_map_folder_action)
         # Open folder action
-        choose_data_all_action = QAction("Choose data all", self)
+        choose_data_all_action = QAction("Choose data all label image to map", self)
         choose_data_all_action.triggered.connect(self.choose_data_all)
         file_menu.addAction(choose_data_all_action)
+
         
-        # Open folder action 
-        open_action = QAction("Open folder image", self)
-        open_action.triggered.connect(self.open_folder_image)
-        file_menu.addAction(open_action)
+        # # Open folder action 
+        # open_action = QAction("Open folder image", self)
+        # open_action.triggered.connect(self.open_folder_image)
+        # file_menu.addAction(open_action)
 
-        # Open File action 
-        open_file_action = QAction("Open file map", self)
-        open_file_action.triggered.connect(self.open_tiff_file)
-        file_menu.addAction(open_file_action)
+        # # Open File action 
+        # open_file_action = QAction("Open file map", self)
+        # open_file_action.triggered.connect(self.open_tiff_file)
+        # file_menu.addAction(open_file_action)
 
-        # Choose Save Folder 
-        choose_save_folder_action = QAction("Choose homography save folder", self)
-        choose_save_folder_action.triggered.connect(self.choose_save_folder)
-        file_menu.addAction(choose_save_folder_action)
+        # # Choose Save Folder 
+        # choose_save_folder_action = QAction("Choose homography save folder", self)
+        # choose_save_folder_action.triggered.connect(self.choose_save_folder)
+        # file_menu.addAction(choose_save_folder_action)
 
-        #Choose cache folder 
-        choose_cache_folder_action = QAction("Choose homography cache folder", self)
-        choose_cache_folder_action.triggered.connect(self.choose_cache_folder)
-        file_menu.addAction(choose_cache_folder_action)
+        # #Choose cache folder 
+        # choose_cache_folder_action = QAction("Choose homography cache folder", self)
+        # choose_cache_folder_action.triggered.connect(self.choose_cache_folder)
+        # file_menu.addAction(choose_cache_folder_action)
 
-        self.zoom_in_button = QPushButton("Zoom In", self.central_widget)
-        self.zoom_out_button = QPushButton("Zoom Out", self.central_widget)
+
+        #######################################################
+        ############### LABEL MAP TO MAP ######################
+        #######################################################
+
+
+        # self.zoom_in_button = QPushButton("Zoom In", self.central_widget)
+        # self.zoom_out_button = QPushButton("Zoom Out", self.central_widget)
         '''
             add-on function, prev, next, save, unsave
         '''
@@ -92,7 +106,7 @@ class ImageViewer(QMainWindow):
         self.reset_homo_button = QPushButton("Reset Homo", self.central_widget)
         self.reset_homo_cache_button = QPushButton("Reset Homo Cache", self.central_widget)
 
-        self.four_point_press_button = QPushButton("Four Point Press", self.central_widget)
+        self.four_point_press_button = QPushButton("Point Match", self.central_widget)
 
         
         
@@ -145,8 +159,8 @@ class ImageViewer(QMainWindow):
         # Add buttons to a horizontal layout
         widget_with_layout = QWidget()
         button_layout = QVBoxLayout()
-        button_layout.addWidget(self.zoom_in_button)
-        button_layout.addWidget(self.zoom_out_button)
+        # button_layout.addWidget(self.zoom_in_button)
+        # button_layout.addWidget(self.zoom_out_button)
         button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.next_button)
         button_layout.addWidget(self.save_button)
@@ -154,6 +168,20 @@ class ImageViewer(QMainWindow):
         button_layout.addWidget(self.reset_homo_button)
         button_layout.addWidget(self.reset_homo_cache_button)
         button_layout.addWidget(self.four_point_press_button)
+
+        combo_box_layout = QHBoxLayout()
+        self.comboBox = QComboBox(self)
+
+        self.comboBox.currentIndexChanged.connect(self.handle_choose_combo_box)
+        # self.comboBox.addItem("Option 1")
+        # self.comboBox.addItem("Option 2")
+        # self.comboBox.addItem("Option 3")
+        self.label = QLabel(self)
+        self.label.setText("Select map: ")
+        combo_box_layout.addWidget(self.label)
+        combo_box_layout.addWidget(self.comboBox)
+
+        button_layout.addLayout(combo_box_layout)
         
         self.plain_text_label = QLabel(self)
         self.plain_text_label.setText(" E - prev \n R - next \n Q - save \n S - delete \n W - open point choose \n D - reset homo cache \n A - save after choose point")
@@ -211,14 +239,15 @@ class ImageViewer(QMainWindow):
         # self.list_widget = QListWidget(self.central_widget)
         # layout.addWidget(self.list_widget)
 
-        self.zoom_in_button.clicked.connect(self.zoom_in)
-        self.zoom_out_button.clicked.connect(self.zoom_out)
+        # self.zoom_in_button.clicked.connect(self.zoom_in)
+        # self.zoom_out_button.clicked.connect(self.zoom_out)
 
         # self.image_data = cv2.imread("03_09_2023_09_27_02_geotag.jpg")
         # self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
         # self.display_image(self.image_data)
 
         self.image_data = None
+        # self.map_data_all =  None
         self.central_widget.installEventFilter(self)
 
         self.folder_image_path = ""
@@ -228,45 +257,105 @@ class ImageViewer(QMainWindow):
         self.folder_homography_save = ""
         # .image file folder path
         self.folder_image_raw_path = ""
+        self.folder_all_map = ""
         
         self.files_homography_save = []
         self.clicked_point = None
         self.map_data = None
-        self.homography_matrix = None
         self.point_move = None
         self.point_move_pre = None
 
         self.point_in_map = None
         self.point_in_image = None
+        self.map_list = None
 
         self.window2 = MainWindow2()
         self.window2.destroyed.connect(self.handle_window2_closed)
+        
+        self.H_star = None
+        self.H_image_to_map = None
+        self.map_name = None
+        self.map_for_label = None
 
-        #todo: for debug
-        # self.open_tiff_file()
-        # self.choose_cache_folder()
-        # self.choose_save_folder()
-        # self.open_folder_image()
+    def handle_choose_combo_box(self):
+        self.map_for_label = self.comboBox.currentText()
+        print("COMBO BOX: ", self.comboBox.currentText())
+        if self.map_name == self.map_for_label:
+            self.map_data = self.read_map(self.folder_all_map + "/sub_map/"+self.map_for_label+".tif")
+            self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+        elif self.map_for_label == "map_base":
+            self.map_data = self.read_map(self.folder_all_map + "/map_base/map_base.tif")
+            self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+        else:
+            self.map_data = self.read_map(self.folder_all_map + "/sub_map/"+self.map_for_label+".tif")
+            self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
+        self.convert_homography_matrix()
+
+        # update new map 
+        current_index = self.file_images_path.index(self.list_widget.currentItem().text())
+        image_path = self.file_images_path[current_index]
+        self.read_and_display_image(image_path,self.H_star)
+
     
+    def convert_homography_matrix(self):
+        '''
+            H_star is homography matrix from image to 2th map
+            H_image_to_map is homography matrix from image to map
+            this function aim to find H_star if have H_image_to_map
+        '''
+        if self.map_name == self.map_for_label or self.folder_all_map == "":
+            self.H_star = self.H_image_to_map
+        elif self.map_for_label == "map_base":
+            H_map_to_base = np.loadtxt(self.folder_all_map+"/data_homography/" + self.map_name + ".txt")
+            self.H_star = H_map_to_base @ self.H_image_to_map
+        else:
+            H_map_to_base = np.loadtxt(self.folder_all_map + "/data_homography/" + self.map_name + ".txt")
+            H_map_star_to_base = np.loadtxt(self.folder_all_map + "/data_homography/" + self.map_for_label + ".txt")
+            self.H_star = np.linalg.inv(H_map_star_to_base) @ H_map_to_base @ self.H_image_to_map
+    
+    def inv_convert_homography_matrix(self):
+        '''
+            H_star is homography matrix from image to 2th map
+            H_image_to_map is homography matrix from image to map
+            this function aim to find H_image_to_map if have H_star
+        '''
+        if self.map_name == self.map_for_label or self.folder_all_map == "":
+            self.H_image_to_map = self.H_star
+        elif self.map_for_label == "map_base":
+            H_map_to_base = np.loadtxt(self.folder_all_map+"/data_homography/" + self.map_name + ".txt")
+            self.H_image_to_map = np.linalg.inv(H_map_to_base) @ self.H_star
+        else:
+            H_map_to_base = np.loadtxt(self.folder_all_map + "/data_homography/" + self.map_name + ".txt")
+            H_map_star_to_base = np.loadtxt(self.folder_all_map + "/data_homography/" + self.map_for_label + ".txt")
+            self.H_image_to_map = np.linalg.inv(np.linalg.inv(H_map_star_to_base) @ H_map_to_base) @ self.H_star
+
+        
+
+
     def reset_homo_button_click(self):
-        homography_matrix = np.eye(3)
-        self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-        self.display_image(self.opencv_helper.visualize_image)
+        if self.map_data is not None and self.image_data is not None: 
+            homography_matrix = np.eye(3)
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+            self.display_image(self.opencv_helper.visualize_image)
 
     def reset_homo_cache_button_click(self):
-        current_index = self.file_images_path.index(self.list_widget.currentItem().text())
-        homography_file_cache = self.folder_homography_cache + "/" + \
-                                   os.path.basename(self.file_images_path[current_index]).split(".")[0] + ".txt"
-        # print(homography_file_cache)
-        homography_matrix = np.loadtxt(homography_file_cache)
-        self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-        self.display_image(self.opencv_helper.visualize_image)
+        if self.file_images_path:
+            current_index = self.file_images_path.index(self.list_widget.currentItem().text())
+            homography_file_cache = self.folder_homography_cache + "/" + \
+                                    os.path.basename(self.file_images_path[current_index]).split(".")[0] + ".txt"
+            # print(homography_file_cache)
+            self.H_image_to_map = np.loadtxt(homography_file_cache)
+            self.convert_homography_matrix()
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, self.H_star)
+            self.display_image(self.opencv_helper.visualize_image)
 
     def update_occurency(self, value):
-        self.opencv_helper.change_occurency(value)
-        homography_matrix = self.opencv_helper.homography_matrix
-        self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-        self.display_image(self.opencv_helper.visualize_image)
+        if self.map_data is not None and self.image_data is not None:
+            self.opencv_helper.change_occurency(value)
+            self.H_star = self.opencv_helper.homography_matrix
+            # self.convert_homography_matrix()
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, self.H_star)
+            self.display_image(self.opencv_helper.visualize_image)
     
     def handle_window2_closed(self):
         condition = self.check_condition(self.window2.mouse_click_point_1, self.window2.mouse_click_point_2)
@@ -315,8 +404,11 @@ class ImageViewer(QMainWindow):
 
     
     def handle_four_point_press_button_click(self):
-        self.window2.load_image(self.image_data, self.map_data)
-        self.window2.show()
+        if self.image_data is not None and self.map_data is not None:
+            self.window2.load_image(self.image_data, self.map_data)
+            self.window2.show()
+        # self.window2.load_image(self.image_data, self.map_data)
+        # self.window2.show()
 
     def handle_prev_button_click(self):
         if self.file_images_path:
@@ -328,12 +420,9 @@ class ImageViewer(QMainWindow):
 
             # Load and display the previous image
             prev_image_path = self.file_images_path[prev_index]
-            self.image_data = cv2.imread(prev_image_path)
-            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-            # for merge 2 image
-            homography_matrix = self.read_homography_matrix(self.has_cache_label_file(prev_image_path)[1])
-            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-            self.display_image(self.opencv_helper.visualize_image)
+            self.H_image_to_map = self.read_homography_matrix(self.has_cache_label_file(prev_image_path)[1])
+            self.convert_homography_matrix()
+            self.read_and_display_image(prev_image_path,self.H_star)
 
 
             # Update the selected item in the list widget
@@ -350,12 +439,9 @@ class ImageViewer(QMainWindow):
 
             # Load and display the next image
             next_image_path = self.file_images_path[next_index]
-            self.image_data = cv2.imread(next_image_path)
-            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-            # for merge 2 image
-            homography_matrix = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
-            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-            self.display_image(self.opencv_helper.visualize_image)
+            self.H_image_to_map = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
+            self.convert_homography_matrix()
+            self.read_and_display_image(next_image_path,self.H_star)
 
             # Update the selected item in the list widget
             self.list_widget.setCurrentItem(self.list_widget.item(next_index))
@@ -390,12 +476,9 @@ class ImageViewer(QMainWindow):
 
             # Load and display the next image
             next_image_path = self.file_images_path[next_index]
-            self.image_data = cv2.imread(next_image_path)
-            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-            # for merge 2 image
-            homography_matrix = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
-            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-            self.display_image(self.opencv_helper.visualize_image)
+            self.H_image_to_map = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
+            self.convert_homography_matrix()
+            self.read_and_display_image(next_image_path,self.H_star)
 
             # Update the selected item in the list widget
             self.list_widget.setCurrentItem(self.list_widget.item(next_index))
@@ -414,7 +497,9 @@ class ImageViewer(QMainWindow):
             homography_file_cache = self.folder_homography_cache + "/" + \
                                    os.path.basename(self.file_images_path[current_index]).split(".")[0] + ".txt"
             print("CACHE PATH:  ", homography_file_cache)
-            np.savetxt(homography_file_save, self.opencv_helper.homography_matrix)
+            self.H_star = self.opencv_helper.homography_matrix
+            self.inv_convert_homography_matrix()
+            np.savetxt(homography_file_save, self.H_image_to_map)
             # np.savetxt(homography_file_cache, self.opencv_helper.homography_matrix)
             ##########################################################
             '''
@@ -433,12 +518,9 @@ class ImageViewer(QMainWindow):
 
             # Load and display the next image
             next_image_path = self.file_images_path[next_index]
-            self.image_data = cv2.imread(next_image_path)
-            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-            # for merge 2 image
-            homography_matrix = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
-            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-            self.display_image(self.opencv_helper.visualize_image)
+            self.H_image_to_map = self.read_homography_matrix(self.has_cache_label_file(next_image_path)[1])
+            self.convert_homography_matrix()
+            self.read_and_display_image(next_image_path,self.H_star)
 
             # Update the selected item in the list widget
             self.list_widget.setCurrentItem(self.list_widget.item(next_index))
@@ -510,20 +592,54 @@ class ImageViewer(QMainWindow):
         new_file_name = file_name + ".txt"
 
         if os.path.exists(self.folder_homography_save + "/"+ new_file_name):
+            print("load from save folder")
             return True, self.folder_homography_save + "/"+ new_file_name
         else:
+            print("load from cache folder")
             return False, self.folder_homography_cache + "/"+ new_file_name
+
     def list_item_clicked(self, item):
         # Handle the event when a list item is clicked
 
         file_path = item.text()
-        self.image_data = cv2.imread(file_path)
-        self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-        self.display_image(self.image_data)
-        homography_matrix = self.read_homography_matrix(self.has_cache_label_file(file_path)[1])
-        self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-        self.display_image(self.opencv_helper.visualize_image)
+        self.H_image_to_map = self.read_homography_matrix(self.has_cache_label_file(file_path)[1])
+        self.convert_homography_matrix()
+        self.read_and_display_image(file_path,self.H_star)
 
+    def update_combo_box(self):
+        '''
+            update combo box
+        '''
+        print("checkkking:   ", self.image_data)
+        print("checkkking2:    ", self.files_homography_save)
+        map_list = [os.path.splitext(os.path.basename(i))[0] for i in self.files_homography_save]
+        for i in map_list: 
+            self.comboBox.addItem(i)
+        self.comboBox.addItem("map_base")
+
+        
+
+    def set_default_value(self,default_value):
+        self.comboBox.setCurrentText(default_value)
+        
+
+    @staticmethod
+    def check_file_extension(file_path):
+        '''
+            check file path extension 
+                0 : image file
+                1 : tiff file
+                2 : unknow file
+        '''
+        _, extension = os.path.splitext(file_path)
+        
+        if extension.lower() == ".jpg" or extension.lower() == ".jpeg" or extension.lower() == ".png":
+            return 0
+        elif extension.lower() == ".tif":
+            return 1
+        else:
+            return 2
+        
 
     def read_homography_matrix(self, file_path):
         '''
@@ -531,21 +647,80 @@ class ImageViewer(QMainWindow):
         '''
         print("FILE_PATH: ", file_path)
         if not os.path.exists(file_path):
-            return np.array(
-                [[0, 0], [640, 0], [640, 480], [0, 480]],
-                dtype=np.float32)
+            return np.array([[1, 0, 0],
+                     [0, 1, 0],
+                     [0, 0, 1]])
         homography_matrix = np.loadtxt(file_path)
         return homography_matrix
     
+    def show_warning_message(self, message):
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setWindowTitle("Warning")
+        msg_box.setText(message)
+        msg_box.exec_()
+    #TODO: finnish this function
+    def choose_data_map_folder(self):
+        '''
+            label tranform matrix between 2 map
+        '''
+        options = QFileDialog.Options()
+        folder_path = QFileDialog.getExistingDirectory(self, 'Open All Folder', options=options)
+        if folder_path:
+            map_base_file_path = folder_path + "/map_base/map_base.tif"
+            sub_map_folder_path = folder_path + "/sub_map"
+            save_folder_path = folder_path + "/data_homography/"
+            missing_paths = [path for path in [map_base_file_path, sub_map_folder_path, save_folder_path] if not os.path.exists(path)]
+
+            if missing_paths:
+                # Show warning message box with details of missing paths
+                missing_paths_message = "The following paths do not exist:\n\n"
+                missing_paths_message += "\n".join(missing_paths)
+                self.show_warning_message(missing_paths_message)
+            else:
+                print("All paths exist.")
+                self.open_tiff_file_support(map_base_file_path)
+                self.choose_save_folder_support(save_folder_path)
+                self.open_folder_image_support(sub_map_folder_path)
+                self.folder_all_map = folder_path
+                print("FILE IMAGE PATH :      ",self.file_images_path)
+                print("FILE HOMOGEAPHY SAVE", self.files_homography_save)
 
     #todo: comment for debug
     def choose_data_all(self):
+        '''
+            one click choose all data label image to map
+        '''
         options = QFileDialog.Options()
         folder_path = QFileDialog.getExistingDirectory(self, 'Open All Folder', options=options)
-        self.open_tiff_file_for_all(folder_path)
-        self.choose_cache_folder_for_all(folder_path)
-        self.choose_save_folder_for_all(folder_path)
-        self.open_folder_image_for_all(folder_path)
+        if folder_path:
+            last_part = os.path.basename(folder_path)
+            number = ''.join(filter(str.isdigit, last_part))
+            tiff_file_path = folder_path + "/drone_map/map" + str(number) + ".tif"
+            self.map_name = "map" + str(number)
+            cache_folder_path = folder_path+"/drone_homography_cache"
+            save_folder_path = folder_path + "/drone_homography"
+            image_folder_path = folder_path + "/drone_jpg"
+            missing_paths = [path for path in [tiff_file_path, cache_folder_path, save_folder_path,image_folder_path] if not os.path.exists(path)]
+            if missing_paths:
+                # Show warning message box with details of missing paths
+                missing_paths_message = "The following paths do not exist:\n\n"
+                missing_paths_message += "\n".join(missing_paths)
+                self.show_warning_message(missing_paths_message)
+            else:
+                # print(len(self.files_homography_save))
+                # print(os.path.splitext(self.files_homography_save[0])[1])
+                if len(self.files_homography_save) >0 and os.path.splitext(self.file_images_path[0])[1] == ".tif":
+                    # print("update combo box")
+                    self.update_combo_box()
+                map_name = "map" + str(number)
+                self.set_default_value(map_name)
+                self.open_tiff_file_support(tiff_file_path)
+                self.choose_cache_folder_support(cache_folder_path)
+                self.choose_save_folder_support(save_folder_path)
+                self.open_folder_image_support(image_folder_path)
+        # print("FILE IMAGE PATH :      ",self.file_images_path)
+        # print("FILE HOMOGEAPHY SAVE", self.files_homography_save)
         # pass
 
     #todo: comment for debug
@@ -556,37 +731,13 @@ class ImageViewer(QMainWindow):
         # folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_jpg"
         # print(folder_path)     
         if folder_path:
-            self.folder_image_path = folder_path
-        self.file_images_path = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".jpg",".jpeg", ".png"))]
-        # print(self.folder_image_path)
-        # print(self.file_images_path)
-        self.update_list_widget()
-        if self.file_images_path:
-
-            first_item = self.list_widget.item(0)
-            if first_item:
-                self.list_widget.setCurrentItem(first_item)
-                
-                # Load and display the first image
-                first_image_path = first_item.text()
-                self.image_data = cv2.imread(first_image_path)
-                self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-                '''
-                add new image function:
-                    :param map: 
-                    :param image:
-                    :param homography_matrix:    
-                '''
-                homography_matrix = self.read_homography_matrix(self.has_cache_label_file(first_image_path)[1])
-                self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-                self.display_image(self.opencv_helper.visualize_image)
+            self.open_folder_image_support(folder_path)
     
-    def open_folder_image_for_all(self, folder_path):
-        folder_path = folder_path + "/drone_jpg"
+    def open_folder_image_support(self, folder_path):
         # print(folder_path)     
         if os.path.exists(folder_path):
             self.folder_image_path = folder_path
-            self.file_images_path = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".jpg",".jpeg", ".png"))]
+            self.file_images_path = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".jpg",".jpeg", ".png", ".tif"))]
         # print(self.folder_image_path)
         # print(self.file_images_path)
         self.update_list_widget()
@@ -595,62 +746,69 @@ class ImageViewer(QMainWindow):
             first_item = self.list_widget.item(0)
             if first_item:
                 self.list_widget.setCurrentItem(first_item)
-                
+
                 # Load and display the first image
                 first_image_path = first_item.text()
-                self.image_data = cv2.imread(first_image_path)
-                self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
-                '''
-                add new image function:
-                    :param map: 
-                    :param image:
-                    :param homography_matrix:    
-                '''
-                homography_matrix = self.read_homography_matrix(self.has_cache_label_file(first_image_path)[1])
-                self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
-                self.display_image(self.opencv_helper.visualize_image)
+                print(type(first_image_path))
+                print(self.check_file_extension(first_image_path))
+                self.H_image_to_map = self.read_homography_matrix(self.has_cache_label_file(first_image_path)[1])
+                self.convert_homography_matrix()
+                self.read_and_display_image(first_image_path,self.H_star)
+                # '''
+                # add new image function:
+                #     :param map: 
+                #     :param image:
+                #     :param homography_matrix:    
+                # '''
+                # homography_matrix = self.read_homography_matrix(self.has_cache_label_file(first_image_path)[1])
+                # self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+                # self.display_image(self.opencv_helper.visualize_image)
+    
+    def read_and_display_image(self, file_path,homography_matrix):
+        '''
+            read image and display image
+            input:  file_path: path to image
+                    homography_matrix: homography matrix
+            output: display image on QGraphicView
+        '''
+        flag_read_image = self.check_file_extension(file_path)
+        if flag_read_image == 0:
+            self.image_data = cv2.imread(file_path)
+            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
+            self.display_image(self.image_data)
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+            self.display_image(self.opencv_helper.visualize_image)
+        else:
+            self.image_data = self.read_map(file_path)
+            self.image_data = cv2.cvtColor(self.image_data, cv2.COLOR_BGR2RGB)
+            # print("CHECK ",self.image_data, first_image_path)
+            self.opencv_helper.add_new_image(self.map_data, self.image_data, homography_matrix)
+            self.display_image(self.opencv_helper.visualize_image)
 
-    #todo: comment for debug
     def open_tiff_file(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(self, 'Open Map TIFF file', '', 'Images (*.tif);;All Files (*)', options=options)
         if file_path:
-            self.file_map_path = file_path
-            # print(self.file_map_path)
-            self.map_data = self.read_map(self.file_map_path)
-            self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
-            self.display_image(self.map_data)
+            self.open_tiff_file_support(file_path)
     
-    def open_tiff_file_for_all(self, folder_path):
+    def open_tiff_file_support(self, file_path):
         # debug code
-
-
-        # Split the path and get the last part
-        last_part = os.path.basename(folder_path)
-        # Extract the digit from the last part
-        number = ''.join(filter(str.isdigit, last_part))
-
-        self.file_map_path = folder_path + "/drone_map/map" + str(number) + ".tif"
+        self.file_map_path = file_path
         if os.path.exists(self.file_map_path):
             self.map_data = self.read_map(self.file_map_path)
             self.map_data = cv2.cvtColor(self.map_data, cv2.COLOR_BGR2RGB)
             self.display_image(self.map_data)
 
-
-    #todo: comment for debug
     def choose_save_folder(self):
         options = QFileDialog.Options()
         folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
         # folder_path = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography"
         if folder_path:
-            self.folder_homography_save = folder_path
-            self.files_homography_save = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".txt"))]
-        self.update_list_widget()
+            self.choose_save_folder_support(folder_path)
         # print("save homography: ",self.folder_homography_save)    
         # print("file homography save: ", self.files_homography_save)     
 
-    def choose_save_folder_for_all(self,folder_path):
-        folder_path = folder_path + "/drone_homography"
+    def choose_save_folder_support(self,folder_path):
         if os.path.exists(folder_path):
             self.folder_homography_save = folder_path
             self.files_homography_save = [folder_path + "/" + str(i) for i in os.listdir(folder_path) if i.endswith((".txt"))]
@@ -663,13 +821,12 @@ class ImageViewer(QMainWindow):
         options = QFileDialog.Options()
         folder_path = QFileDialog.getExistingDirectory(self, 'Open Image Folder', options=options)
         if folder_path:
-            self.folder_homography_cache = folder_path
-        print("cache homography: ", self.folder_homography_cache)
+            self.choose_cache_folder_support(folder_path)
 
         # debug code
         # self.folder_homography_cache = "/home/trand/Desktop/build_map/Data_Creater/drone1_image-20230509T081743Z-001/data_for_train/drone6_all/drone_homography_cache"
-    def choose_cache_folder_for_all(self, folder_path):
-        self.folder_homography_cache = folder_path+"/drone_homography_cache"
+    def choose_cache_folder_support(self, folder_path):
+        self.folder_homography_cache = folder_path
 
     def load_image(self, file_path):
         pixmap = QPixmap(file_path)
@@ -847,11 +1004,6 @@ class CustomGraphicsView(QGraphicsView):
         # Continue with the default behavior
         super().wheelEvent(event)
 
-        
-
-#TODO: code save button
-#TODO: code unsave button
-#TODO: code reset button
 
 def main():
     viewer = ImageViewer()
