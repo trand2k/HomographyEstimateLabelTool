@@ -15,13 +15,14 @@ import os
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QFileDialog,QShortcut,QHBoxLayout
 from PyQt5.QtGui import QPixmap, QImage, QTransform, QWheelEvent,QKeySequence
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtWidgets import QToolBar,QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox,QComboBox
+from PyQt5.QtWidgets import QProgressBar,QToolBar,QLabel,QLineEdit,QSplitter,QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem,QSlider,QMessageBox,QComboBox
 import sys
 import cv2
 import numpy as np
 import os
 from helper.opencv_helper import Opencv_helper
 from helper.window_dot_point import MainWindow2
+from helper.homography_helper import WorkerThread
 class ImageViewer(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -107,9 +108,7 @@ class ImageViewer(QMainWindow):
         self.reset_homo_cache_button = QPushButton("Reset Homo Cache", self.central_widget)
 
         self.four_point_press_button = QPushButton("Point Match", self.central_widget)
-
-        
-        
+        self.auto_label = QPushButton("Auto label", self.central_widget)
 
         # create a slider
         self.slider = QSlider(self)
@@ -141,7 +140,7 @@ class ImageViewer(QMainWindow):
         four_point_press_shortcut.activated.connect(self.handle_four_point_press_button_click)
         self.four_point_press_button.clicked.connect(self.handle_four_point_press_button_click)
         
-
+        self.auto_label.clicked.connect(self.handle_auto_label_button_click)
 
         self.reset_homo_button.clicked.connect(self.reset_homo_button_click)
 
@@ -168,6 +167,12 @@ class ImageViewer(QMainWindow):
         button_layout.addWidget(self.reset_homo_button)
         button_layout.addWidget(self.reset_homo_cache_button)
         button_layout.addWidget(self.four_point_press_button)
+        button_layout.addWidget(self.auto_label)
+
+        self.progress_bar = QProgressBar(self)
+        button_layout.addWidget(self.progress_bar)
+
+
 
         combo_box_layout = QHBoxLayout()
         self.comboBox = QComboBox(self)
@@ -258,6 +263,7 @@ class ImageViewer(QMainWindow):
         # .image file folder path
         self.folder_image_raw_path = ""
         self.folder_all_map = ""
+        self.folder_path = ""
         
         self.files_homography_save = []
         self.clicked_point = None
@@ -339,7 +345,7 @@ class ImageViewer(QMainWindow):
             self.display_image(self.opencv_helper.visualize_image)
 
     def reset_homo_cache_button_click(self):
-        if self.file_images_path:
+        if self.file_images_path and self.folder_homography_cache != "":
             current_index = self.file_images_path.index(self.list_widget.currentItem().text())
             homography_file_cache = self.folder_homography_cache + "/" + \
                                     os.path.basename(self.file_images_path[current_index]).split(".")[0] + ".txt"
@@ -402,6 +408,17 @@ class ImageViewer(QMainWindow):
         except:
             return False
 
+    def handle_auto_label_button_click(self):
+        self.worker_thread = WorkerThread(self.folder_path)
+        self.worker_thread.update_progress.connect(self.update_progress)
+        self.worker_thread.task_completed.connect(self.task_completed)
+        self.worker_thread.start()
+    
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
+
+    def task_completed(self):
+        print("Task completed. Do something here.")
     
     def handle_four_point_press_button_click(self):
         if self.image_data is not None and self.map_data is not None:
@@ -694,6 +711,7 @@ class ImageViewer(QMainWindow):
         options = QFileDialog.Options()
         folder_path = QFileDialog.getExistingDirectory(self, 'Open All Folder', options=options)
         if folder_path:
+            self.folder_path = folder_path
             last_part = os.path.basename(folder_path)
             number = ''.join(filter(str.isdigit, last_part))
             tiff_file_path = folder_path + "/drone_map/map" + str(number) + ".tif"

@@ -1,52 +1,58 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QLabel, QVBoxLayout, QWidget, QPushButton
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QProgressBar
+from PyQt5.QtCore import QThread, pyqtSignal
 
-class MyWindow(QMainWindow):
+class WorkerThread(QThread):
+    update_progress = pyqtSignal(int)
+    task_completed = pyqtSignal()
+
+
+    def __init__(self):
+        super().__init__()
+        self.count = 201
+    def run(self):
+        for i in range(1, self.count):
+            self.update_progress.emit(int(i/(self.count//100)))
+            self.msleep(100)  # Simulate some work
+
+        # Task completed, emit the signal
+        self.task_completed.emit()
+
+class MyWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        # Create a combo box
-        self.comboBox = QComboBox(self)
-        self.comboBox.addItem("Option 1")
-        self.comboBox.addItem("Option 2")
-        self.comboBox.addItem("Option 3")
+        self.initUI()
 
-        # Create a label to display the selected item
-        self.label = QLabel("Selected: ", self)  # Initialize with a default text
-        self.label.setAlignment(Qt.AlignCenter)
-
-        # Create a reset button
-        self.resetButton = QPushButton("Reset Combo Box", self)
-        self.resetButton.clicked.connect(self.reset_combo_box)
-
-        # Create a layout and add the combo box, label, and button to it
+    def initUI(self):
         layout = QVBoxLayout()
-        layout.addWidget(self.comboBox)
-        layout.addWidget(self.label)
-        layout.addWidget(self.resetButton)
 
-        # Create a central widget and set the layout
-        central_widget = QWidget(self)
-        central_widget.setLayout(layout)
+        self.progress_bar = QProgressBar(self)
+        layout.addWidget(self.progress_bar)
 
-        # Set the central widget of the main window
-        self.setCentralWidget(central_widget)
+        start_button = QPushButton('Start Task', self)
+        start_button.clicked.connect(self.start_task)
+        layout.addWidget(start_button)
 
-        # Connect the combo box's currentIndexChanged signal to a slot
-        self.comboBox.currentIndexChanged.connect(self.update_label)
+        self.setLayout(layout)
+        self.setGeometry(300, 300, 300, 150)
+        self.setWindowTitle('Qt Progress Bar Example')
+        self.show()
 
-    def update_label(self):
-        # Update the label with the selected item
-        selected_item = self.comboBox.currentText()
-        self.label.setText(f"Selected: {selected_item}")
+    def start_task(self):
+        self.worker_thread = WorkerThread()
+        self.worker_thread.update_progress.connect(self.update_progress)
+        self.worker_thread.task_completed.connect(self.task_completed)
+        self.worker_thread.start()
 
-    def reset_combo_box(self):
-        # Clear all items in the combo box
-        self.comboBox.clear()
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
 
-if __name__ == "__main__":
+    def task_completed(self):
+        print("Task completed. Do something here.")
+
+
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MyWindow()
-    window.show()
     sys.exit(app.exec_())

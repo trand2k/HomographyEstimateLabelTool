@@ -46,11 +46,11 @@ class MainWindow2(QWidget):
         self.image_item = None
         self.image_item2 = None
         # add image to 2 graphics view
-        self.image1 = cv2.imread("image/1.jpg")
-        self.image2 = cv2.imread("image/2.jpg")
-        # print(self.image1)
-        # import pdb;pdb.set_trace()
-        self.load_image(self.image1, self.image2)
+        # self.image1 = cv2.imread("image/1.jpg")
+        # self.image2 = cv2.imread("image/2.jpg")
+        # # print(self.image1)
+        # # import pdb;pdb.set_trace()
+        # self.load_image(self.image1, self.image2)
         self.graphics_view.clicked.connect(self.handle_view1_click)
         self.graphics_view2.clicked.connect(self.handle_view2_click)
 
